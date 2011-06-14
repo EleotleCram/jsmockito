@@ -227,14 +227,14 @@ JsMockito.verifier('Sequence', {
         message = "expected but never invoked";
       } else if (index == undefined) {
         message = "expected to be invoked at least " + verifier.count +
-                  " times after invoking " + latestConsumedInteractionFuncName;
+                  " times after invoking " + latestConsumedInteractionFuncName + "()";
       } else if ( newLatestConsumedInteraction == undefined ) {
         if (latestConsumedInteraction.invocationOrderId == 0) {
           message = "expected to be invoked at least " + verifier.count +
                     " times but got " + (interactions.length - index);
         } else {
           message = "expected to be invoked at least " + verifier.count +
-                    " times after invoking " + latestConsumedInteractionFuncName +
+                    " times after invoking " + latestConsumedInteractionFuncName + "()"
                     " but got " + (interactions.length - index);
         }
       }

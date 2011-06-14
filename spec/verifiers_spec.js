@@ -636,33 +636,33 @@ Screw.Unit(function() {
         it("should fail when checking with 0 argument", function() {
           assertThat(function() {
             verify(mock1, seq(0)).a();
-          }, raises());
+          }, throwsMessage("The sequence verifier cannot verify sequences of length 0"));
         });
 
         it("should fail when checking for c", function() {
           assertThat(function() {
             verify(mock1, seq(1)).c();
-          }, raises());
+          }, throwsMessage("expected but never invoked: obj.c()"));
         });
 
         it("should fail when checking for a,b", function() {
           verify(mock1, seq(1)).a();
           assertThat(function() {
             verify(mock1, seq(1)).b();
-          }, raises());
+          }, throwsMessage("expected to be invoked at least 1 times after invoking obj.a(): obj.b()"));
         });
 
         it("should fail when checking for a,a", function() {
           assertThat(function() {
             verify(mock1, seq(2)).a();
-          }, raises());
+          }, throwsMessage("expected to be invoked at least 2 times but got 1: obj.a()"));
         });
 
         it("should fail when checking for b,a,a", function() {
           verify(mock1, seq(1)).b();
           assertThat(function() {
             verify(mock1, seq(2)).a();
-          }, raises());
+          }, throwsMessage("expected to be invoked at least 2 times after invoking obj.b(): obj.a()"));
         });
 
       });
