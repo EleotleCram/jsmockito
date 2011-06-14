@@ -19,6 +19,7 @@
  *   (optional)
  * @return {function} an anonymous function
  */
+var invocationOrderId = 0;
 JsMockito.mockFunction = function(funcName, delegate) {
   if (typeof funcName == 'function') {
     delegate = funcName;
@@ -33,7 +34,7 @@ JsMockito.mockFunction = function(funcName, delegate) {
   var mockFunc = function() {
     var args = [this];
     args.push.apply(args, arguments);
-    interactions.push({args: args});
+    interactions.push({args: args, invocationOrderId: ++invocationOrderId, func: mockFunc});
 
     var stubMatcher = JsMockito.find(stubMatchers, function(stubMatcher) {
       return JsMockito.matchArray(stubMatcher[0], args);
@@ -48,7 +49,8 @@ JsMockito.mockFunction = function(funcName, delegate) {
       stubs.shift();
     return stub.apply(this, arguments);
   };
-
+  mockFunc.funcName = funcName; // for some reason mockFunc.name cannot be changed anymore
+ 
   mockFunc.prototype = delegate.prototype;
 
   mockFunc._jsMockitoStubBuilder = function(contextMatcher) {

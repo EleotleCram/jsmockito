@@ -5,7 +5,7 @@
  * @namespace
  */
 JsMockito.Verifiers = {
-  _export: ['never', 'zeroInteractions', 'noMoreInteractions', 'times', 'once'],
+  _export: ['never', 'zeroInteractions', 'noMoreInteractions', 'times', 'once', 'sequence'],
 
   /**
    * Test that a invocation never occurred. For example:
@@ -61,6 +61,31 @@ JsMockito.Verifiers = {
    */
   once: function() { 
     return new JsMockito.Verifiers.Times(1);
+  },
+
+  /**
+   * Create an instance of a sequence. The sequence is used to create
+   * an in-sequence verifier that asserts that at least a number of
+   * invocations occurred at a particular point in a sequence.
+   * <pre>
+   * var seq = sequence();
+   * verify(mock1, seq(1)).method1(); // mock1#method1 must be called at least once
+   * verify(mock2, seq(1)).method2(); // before mock2#method2 ... etc.
+   * </pre>
+   */
+  sequence: function() {
+    var sequenceVerifierState = {
+      latestConsumedInteraction: {
+        invocationOrderId: 0,
+        args: [],
+        func: {
+          funcName: undefined
+        }
+      }
+    };
+    return function(count) {
+      return new JsMockito.Verifiers.Sequence(sequenceVerifierState, count);
+    };
   }
 };
 
@@ -161,5 +186,67 @@ JsMockito.verifier('NoMoreInteractions', {
       "No interactions wanted, but " + interactions.length + " remains",
       funcName, matchers, describeContext);
     throw description.get();
+  }
+});
+
+// This verifier works as follows:
+// 1. All interactions (with any mock) are given an `invocation order id'
+// during interaction harvesting.
+// 2. Sequence#verifyInteractions asserts that the invocation order id of
+// the newly matched interaction is higher than the previous one.
+// 3. If so, update pointer to latest consume interaction (set it to the
+// newly matched interaction). Else throw sensible exception.
+JsMockito.verifier('Sequence', {
+  init: function(sequenceVerifierState, count) {
+    this.sequenceVerifierState = sequenceVerifierState;
+    if(count > 0) {
+      this.count = count;
+    } else {
+      throw "The sequence verifier cannot verify sequences of length 0";
+    }
+  },
+
+  verifyInteractions: function(funcName, allInteractions, matchers, describeContext) {
+    var verifier = this;
+
+    var interactions = JsMockito.grep(allInteractions, function(interaction) {
+      return JsMockito.matchArray(matchers, interaction.args);
+    });
+
+    var latestConsumedInteraction = verifier.sequenceVerifierState.latestConsumedInteraction;
+    var index = JsMockito.indexOf(interactions,function(interaction) {
+      return interaction.invocationOrderId > latestConsumedInteraction.invocationOrderId;
+    });
+
+    var newLatestConsumedInteraction = interactions[index+verifier.count-1];
+
+    (function assertNewLatestConsumedInteractionIsValid() {
+      var message = undefined,
+          latestConsumedInteractionFuncName = latestConsumedInteraction.func.funcName;
+      if(interactions.length == 0) {
+        message = "expected but never invoked";
+      } else if (index == undefined) {
+        message = "expected to be invoked at least " + verifier.count +
+                  " times after invoking " + latestConsumedInteractionFuncName;
+      } else if ( newLatestConsumedInteraction == undefined ) {
+        if (latestConsumedInteraction.invocationOrderId == 0) {
+          message = "expected to be invoked at least " + verifier.count +
+                    " times but got " + (interactions.length - index);
+        } else {
+          message = "expected to be invoked at least " + verifier.count +
+                    " times after invoking " + latestConsumedInteractionFuncName +
+                    " but got " + (interactions.length - index);
+        }
+      }
+
+      if ( message != undefined ) {
+        var description = verifier.buildDescription(message, funcName, matchers, describeContext);
+        throw description.get();
+      }
+    })();
+
+    // Caveat Lector: DO NOT REPLACE BY: "latestConsumedInteraction = interactions[...]",
+    // as it will not update the sequenceVerifierState!
+    this.sequenceVerifierState.latestConsumedInteraction = newLatestConsumedInteraction;
   }
 });
