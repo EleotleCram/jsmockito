@@ -642,27 +642,27 @@ Screw.Unit(function() {
         it("should fail when checking for c", function() {
           assertThat(function() {
             verify(mock1, seq(1)).c();
-          }, throwsMessage("expected but never invoked: obj.c()"));
+          }, throwsMessage("Expected but never invoked: obj.c()"));
         });
 
         it("should fail when checking for a,b", function() {
           verify(mock1, seq(1)).a();
           assertThat(function() {
             verify(mock1, seq(1)).b();
-          }, throwsMessage("expected to be invoked at least 1 times after invoking obj.a(): obj.b()"));
+          }, throwsMessage("Expected to be invoked at least 1 times after invoking obj.a(): obj.b()"));
         });
 
         it("should fail when checking for a,a", function() {
           assertThat(function() {
             verify(mock1, seq(2)).a();
-          }, throwsMessage("expected to be invoked at least 2 times but got 1: obj.a()"));
+          }, throwsMessage("Expected to be invoked at least 2 times but got 1: obj.a()"));
         });
 
         it("should fail when checking for b,a,a", function() {
           verify(mock1, seq(1)).b();
           assertThat(function() {
             verify(mock1, seq(2)).a();
-          }, throwsMessage("expected to be invoked at least 2 times after invoking obj.b(): obj.a()"));
+          }, throwsMessage("Expected to be invoked at least 2 times after invoking obj.b(): obj.a()"));
         });
 
       });
