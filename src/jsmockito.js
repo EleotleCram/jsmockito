@@ -516,6 +516,13 @@ JsMockito = {
     return undefined;
   },
 
+  indexOf: function(array, callback) {
+    for (var i = 0; i < array.length; i++)
+      if (callback(array[i], i))
+        return i;
+    return undefined;
+  },
+
   any: function(array, callback) {
     return (this.find(array, callback) != undefined);
   }
