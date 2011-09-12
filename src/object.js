@@ -71,7 +71,7 @@ JsMockito.mock = function(Obj, delegate) {
   };
 
   for (var methodName in mockObject) {
-    if (methodName != 'constructor')
+    if (methodName != 'constructor' && (typeof(mockObject[methodName]) == 'function'))
       addMockMethod(methodName);
   }
 
