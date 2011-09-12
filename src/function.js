@@ -86,6 +86,10 @@ JsMockito.mockFunction = function(funcName, delegate) {
     return [ mockFunc ];
   };
 
+  mockFunc.resetInteractions = function() {
+    interactions = [];
+  };
+
   return mockFunc;
 
   function matcherCaptureFunction(contextMatcher, handler) {
