@@ -390,9 +390,9 @@ JsMockito = {
    * @return {object or function} A mock object (as per mock) or mock function
    * (as per mockFunction)
    */
-  spy: function(delegate) {
+  spy: function(delegate, deep) {
     return (typeof delegate == 'function')?
-      JsMockito.mockFunction(delegate) : JsMockito.mock(delegate, delegate);
+      JsMockito.mockFunction(delegate) : JsMockito.mock(delegate, delegate, deep);
   },
 
   contextCaptureFunction: function(defaultContext, handler) {

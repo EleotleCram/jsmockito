@@ -41,7 +41,7 @@
  * @param Obj {function} the constructor for the object to be mocked
  * @return {object} a mock object
  */
-JsMockito.mock = function(Obj, delegate) {
+JsMockito.mock = function(Obj, delegate, deep) {
   delegate = delegate || {};
 
   var MockObject = function() { };
@@ -70,9 +70,13 @@ JsMockito.mock = function(Obj, delegate) {
     mockFunctions.push(mockFunc);
   };
 
-  for (var methodName in mockObject) {
-    if (methodName != 'constructor' && (typeof(mockObject[methodName]) == 'function'))
-      addMockMethod(methodName);
+  for (var propertyName in mockObject) {
+    if(typeof(mockObject[propertyName]) == "function") {
+      if (propertyName != 'constructor')
+        addMockMethod(propertyName);
+    } else if(deep) {
+      mockObject[propertyName] = mock(mockObject[propertyName], deep);
+    }
   }
 
   for (var typeName in JsMockito.nativeTypes) {
