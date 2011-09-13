@@ -207,7 +207,7 @@ JsMockito.verifier('Times', {
 
     var description = this.buildDescription(message, funcName, matchers, describeContext);
     this.describeInteractionsTo(allInteractions, funcName, matchers, description);
-    throw description.get();
+    TestingFrameworkUtil.throwAssertionException(description.get());
   }
 });
 
@@ -239,7 +239,7 @@ JsMockito.verifier('NoMoreInteractions', {
       "No interactions wanted, but " + interactions.length + " remains",
       funcName, matchers, describeContext);
     this.describeInteractionsTo(allInteractions, funcName, matchers, description);
-    throw description.get();
+    TestingFrameworkUtil.throwAssertionException(description.get());
   }
 });
 
@@ -305,7 +305,7 @@ JsMockito.verifier('Sequence', {
           description.append("\tNo interactions where caught since the creation of the sequence verifier!\n\n");
           description.append("\x02Hint\x02: Creating the sequence() prior to invoking the method/code under test will allow it to capture the interactions!");
         }
-        throw description.get();
+        TestingFrameworkUtil.throwAssertionException(description.get());
       }
     })();
 
