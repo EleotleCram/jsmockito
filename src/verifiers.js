@@ -86,20 +86,69 @@ JsMockito.Verifier.prototype = {
 
   buildDescription: function(message, funcName, matchers, describeContext) {
     var description = new JsHamcrest.Description();
-    description.append(message + ': ' + funcName + '(');
-    JsMockito.each(matchers.slice(1), function(matcher, i) {
-      if (i > 0)
-        description.append(', ');
+    description.append(message + ': ');
+    this.describeFunctionTo(funcName, matchers, description, function describeTo(description) {
       description.append('<');
-      matcher.describeTo(description);
+      this.describeTo(description);
       description.append('>');
     });
-    description.append(")");
     if (describeContext) {
       description.append(", 'this' being ");
       matchers[0].describeTo(description);
     }
     return description;
+  },
+
+  describeFunctionTo: function(funcName, matchers, description, describeFunction) {
+    // slice(1) to cut off the 'this' context.
+    var argumentMatchers = matchers.slice(1);
+    var hasMoreThanOneArgument = argumentMatchers.length > 1;
+
+    if (hasMoreThanOneArgument) {
+      description.append("\n\n");
+    }
+
+    description.append(funcName + '(');
+
+    if (hasMoreThanOneArgument) {
+      description.append("\n\t");
+    }
+
+    JsMockito.each(argumentMatchers, function(matcher, i) {
+      if (i > 0) {
+        description.append(', ');
+        description.append("\n\t");
+      }
+
+      describeFunction.call(matcher, description, i+1); // +1 to counteract the slice(1)
+    });
+
+    if (hasMoreThanOneArgument) {
+      description.append("\n)");
+    }
+  },
+
+  describeInteractionsTo: function(interactions, funcName, matchers, description) {
+    description.append("\n\nInteractions are:");
+
+    var verifier = this;
+    interactions.forEach(function(interaction) {
+      verifier.describeFunctionTo(funcName, matchers, description, function describeValueTo(description, argIndex) {
+        var valueDescription = new JsHamcrest.Description();
+        var value = interaction.args[argIndex];
+        var matched = this.matches(value); // CAVEAT: This must be done before describeValueTo, because some matchers
+                                           //            may produce a different message after a test (holding match info)
+        this.describeValueTo(value, valueDescription);
+
+        if(!/\x02/.test(valueDescription.get()) && !matched) {
+          description.append('\x02');
+          description.append(valueDescription.get());
+          description.append('\x02');
+        } else {
+          description.append(valueDescription.get());
+        }
+      });
+    });
   }
 };
 
@@ -129,6 +178,7 @@ JsMockito.verifier('Times', {
     }
 
     var description = this.buildDescription(message, funcName, matchers, describeContext);
+    this.describeInteractionsTo(allInteractions, funcName, matchers, description);
     throw description.get();
   }
 });
@@ -160,6 +210,7 @@ JsMockito.verifier('NoMoreInteractions', {
     var description = this.buildDescription(
       "No interactions wanted, but " + interactions.length + " remains",
       funcName, matchers, describeContext);
+    this.describeInteractionsTo(allInteractions, funcName, matchers, description);
     throw description.get();
   }
 });
