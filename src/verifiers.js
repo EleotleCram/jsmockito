@@ -74,6 +74,7 @@ JsMockito.Verifiers = {
    * </pre>
    */
   sequence: function() {
+    JsMockito.Verifiers.Sequence.interactions = [];
     var sequenceVerifierState = {
       latestConsumedInteraction: {
         invocationOrderId: 0,
@@ -221,26 +222,36 @@ JsMockito.verifier('Sequence', {
     var newLatestConsumedInteraction = interactions[index+verifier.count-1];
 
     (function assertNewLatestConsumedInteractionIsValid() {
-      var message = undefined,
+      var description = new JsHamcrest.Description(),
           latestConsumedInteractionFuncName = latestConsumedInteraction.func.funcName;
-      if(interactions.length == 0) {
-        message = "Expected but never invoked";
+
+      if (interactions.length == 0) {
+        description.append("Expected but never invoked: " + funcName+"()");
       } else if (index == undefined) {
-        message = "Expected to be invoked at least " + verifier.count +
-                  " times after invoking " + latestConsumedInteractionFuncName + "()";
+        description.append("Expected " + funcName+"() to be invoked at least " + verifier.count +
+                  " times after invoking " + latestConsumedInteractionFuncName+"()");
       } else if ( newLatestConsumedInteraction == undefined ) {
         if (latestConsumedInteraction.invocationOrderId == 0) {
-          message = "Expected to be invoked at least " + verifier.count +
-                    " times but got " + (interactions.length - index);
+          description.append("Expected " + funcName+"() to be invoked at least " + verifier.count +
+                    " times but got " + (interactions.length - index));
         } else {
-          message = "Expected to be invoked at least " + verifier.count +
-                    " times after invoking " + latestConsumedInteractionFuncName + "()"
-                    " but got " + (interactions.length - index);
+          description.append("Expected " + funcName+"() to be invoked at least " + verifier.count +
+                    " times after invoking " + latestConsumedInteractionFuncName+"()" +
+                    " but got " + (interactions.length - index));
         }
       }
 
-      if ( message != undefined ) {
-        var description = verifier.buildDescription(message, funcName, matchers, describeContext);
+      if (description.get() != "") {
+        description.append("\n\nInteractions are:\n\n");
+        if(JsMockito.Verifiers.Sequence.interactions.length > 0) {
+          JsMockito.Verifiers.Sequence.interactions.forEach(function(interaction) {
+            description.append(interaction.func.funcName + "([...])\n");
+          });
+          description.append("\n\x02Note\x02: For technical reasons, function arguments for the above interactions cannot be displayed.");
+        } else {
+          description.append("\tNo interactions where caught since the creation of the sequence verifier!\n\n");
+          description.append("\x02Hint\x02: Creating the sequence() prior to invoking the method/code under test will allow it to capture the interactions!");
+        }
         throw description.get();
       }
     })();
@@ -250,3 +261,4 @@ JsMockito.verifier('Sequence', {
     this.sequenceVerifierState.latestConsumedInteraction = newLatestConsumedInteraction;
   }
 });
+JsMockito.Verifiers.Sequence.interactions = [];

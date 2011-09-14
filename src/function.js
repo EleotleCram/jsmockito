@@ -33,7 +33,10 @@ JsMockito.mockFunction = function(funcName, delegate) {
   var mockFunc = function() {
     var args = [this];
     args.push.apply(args, arguments);
-    interactions.push({args: args, invocationOrderId: ++JsMockito.mockFunction.invocationOrderId, func: mockFunc});
+
+    var interaction = {args: args, invocationOrderId: ++JsMockito.mockFunction.invocationOrderId, func: mockFunc};
+    interactions.push(interaction);
+    JsMockito.Verifiers.Sequence.interactions.push(interaction);
 
     var stubMatcher = JsMockito.find(stubMatchers, function(stubMatcher) {
       return JsMockito.matchArray(stubMatcher[0], args);
