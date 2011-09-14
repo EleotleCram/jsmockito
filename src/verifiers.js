@@ -124,8 +124,10 @@ JsMockito.Verifier.prototype = {
     });
 
     if (hasMoreThanOneArgument) {
-      description.append("\n)");
+      description.append("\n");
     }
+
+    description.append(")");
   },
 
   describeInteractionsTo: function(interactions, funcName, matchers, description) {
