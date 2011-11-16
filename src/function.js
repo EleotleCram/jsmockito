@@ -33,7 +33,10 @@ JsMockito.mockFunction = function(funcName, delegate) {
   var mockFunc = function() {
     var args = [this];
     args.push.apply(args, arguments);
-    interactions.push({args: args});
+
+    var interaction = {args: args, invocationOrderId: ++JsMockito.mockFunction.invocationOrderId, func: mockFunc};
+    interactions.push(interaction);
+    JsMockito.Verifiers.Sequence.interactions.push(interaction);
 
     var stubMatcher = JsMockito.find(stubMatchers, function(stubMatcher) {
       return JsMockito.matchArray(stubMatcher[0], args);
@@ -48,7 +51,8 @@ JsMockito.mockFunction = function(funcName, delegate) {
       stubs.shift();
     return stub.apply(this, arguments);
   };
-
+  mockFunc.funcName = funcName; // for some reason mockFunc.name cannot be changed anymore
+ 
   mockFunc.prototype = delegate.prototype;
 
   mockFunc._jsMockitoStubBuilder = function(contextMatcher) {
@@ -86,6 +90,10 @@ JsMockito.mockFunction = function(funcName, delegate) {
     return [ mockFunc ];
   };
 
+  mockFunc.resetInteractions = function() {
+    interactions = [];
+  };
+
   return mockFunc;
 
   function matcherCaptureFunction(contextMatcher, handler) {
@@ -97,4 +105,5 @@ JsMockito.mockFunction = function(funcName, delegate) {
     );
   };
 };
+JsMockito.mockFunction.invocationOrderId = 0;
 JsMockito._export.push('mockFunction');

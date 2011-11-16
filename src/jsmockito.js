@@ -390,9 +390,9 @@ JsMockito = {
    * @return {object or function} A mock object (as per mock) or mock function
    * (as per mockFunction)
    */
-  spy: function(delegate) {
+  spy: function(delegate, deep) {
     return (typeof delegate == 'function')?
-      JsMockito.mockFunction(delegate) : JsMockito.mock(delegate);
+      JsMockito.mockFunction(delegate) : JsMockito.mock(delegate, deep, true);
   },
 
   contextCaptureFunction: function(defaultContext, handler) {
@@ -513,6 +513,13 @@ JsMockito = {
     for (var i = 0; i < array.length; i++)
       if (callback(array[i], i))
         return array[i];
+    return undefined;
+  },
+
+  indexOf: function(array, callback) {
+    for (var i = 0; i < array.length; i++)
+      if (callback(array[i], i))
+        return i;
     return undefined;
   },
 

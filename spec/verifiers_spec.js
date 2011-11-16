@@ -528,5 +528,147 @@ Screw.Unit(function() {
         });
       });
     });
+
+    describe('#sequence', function() {
+      var mock1, mock2, seq;
+
+      before(function() {
+        mock1 = mock({a: function(){},b: function(){},c: function(){}});
+        mock2 = mock({d: function(){},e: function(){},f: function(){}});
+        seq = sequence();
+      });
+
+      describe("invocation order a,a,b,a", function() {
+        before(function() {
+          mock1.a(); mock1.a(); mock1.b(); mock1.a();
+        });
+
+        it("should pass when checking for a,a,a", function() {
+          verify(mock1, seq(1)).a();
+          verify(mock1, seq(1)).a();
+          verify(mock1, seq(1)).a();
+        });
+
+        it("should pass when checking for a followed by a,a", function() {
+          verify(mock1, seq(1)).a();
+          verify(mock1, seq(2)).a();
+        });
+
+        it("should pass when checking for a,a,b,a", function() {
+          verify(mock1, seq(2)).a();
+          verify(mock1, seq(1)).b();
+          verify(mock1, seq(1)).a();
+        });
+
+        it("should pass when checking for b,a", function() {
+          verify(mock1, seq(1)).b();
+          verify(mock1, seq(1)).a();
+        });
+
+        it("should fail when checking for c", function() {
+          assertThat(function() {
+            verify(mock1, seq(1)).c();
+          }, raises());
+        });
+
+        it("should fail when checking for b,a,a", function() {
+          verify(mock1, seq(1)).b();
+          assertThat(function() {
+            verify(mock1, seq(2)).a();
+          }, raises());
+        });
+      });
+
+      describe("invocation order a,d,a,b,a", function() {
+        before(function() {
+          mock1.a(); mock2.d(); mock1.a(); mock1.b(); mock1.a();
+        });
+
+        it("should pass when checking for a,d,b", function() {
+          verify(mock1, seq(1)).a();
+          verify(mock2, seq(1)).d();
+          verify(mock1, seq(1)).b();
+        });
+      });
+
+      describe("invocation order a(1),a(2)", function() {
+        before(function() {
+          mock1.a(1); mock1.a(2);
+        });
+
+        it("should pass when checking for a(1),a(2)", function() {
+          verify(mock1, seq(1)).a(1);
+          verify(mock1, seq(1)).a(2);
+        });
+
+        it("should fail when checking for a(2),a(1)", function() {
+          verify(mock1, seq(1)).a(2);
+          assertThat(function() {
+            verify(mock1, seq(1)).a(1);
+          }, raises());
+        });
+
+        it("should fail when checking for a(1),a(1)", function() {
+          verify(mock1, seq(1)).a(1);
+          assertThat(function() {
+            verify(mock1, seq(1)).a(1);
+          }, raises());
+        });
+
+        it("should fail when checking for a(1),a(1)", function() {
+          assertThat(function() {
+            verify(mock1, seq(2)).a(1);
+          }, raises());
+        });
+
+        it("should fail when checking for a(3)", function() {
+          assertThat(function() {
+            verify(mock1, seq(1)).a(3);
+          }, raises());
+        });
+      });
+
+      describe("when testing for all possible verification errors", function() {
+        before(function() {
+          mock1.b(); mock1.a();
+        });
+
+        it("should fail when checking with 0 argument", function() {
+          assertThat(function() {
+            verify(mock1, seq(0)).a();
+          }, throwsMessage("The sequence verifier cannot verify sequences of length 0"));
+        });
+
+        it("should fail when checking for c", function() {
+          assertThat(function() {
+            verify(mock1, seq(1)).c();
+          }, throwsMessage("Expected but never invoked: obj.c()"));
+        });
+
+        it("should fail when checking for a,b", function() {
+          verify(mock1, seq(1)).a();
+          assertThat(function() {
+            verify(mock1, seq(1)).b();
+          }, throwsMessage("Expected to be invoked at least 1 times after invoking obj.a(): obj.b()"));
+        });
+
+        it("should fail when checking for a,a", function() {
+          assertThat(function() {
+            verify(mock1, seq(2)).a();
+          }, throwsMessage("Expected to be invoked at least 2 times but got 1: obj.a()"));
+        });
+
+        it("should fail when checking for b,a,a", function() {
+          verify(mock1, seq(1)).b();
+          assertThat(function() {
+            verify(mock1, seq(2)).a();
+          }, throwsMessage("Expected to be invoked at least 2 times after invoking obj.b(): obj.a()"));
+        });
+
+      });
+
+      after(function() {});
+
+    });
   });
 });
