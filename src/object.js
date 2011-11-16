@@ -29,7 +29,7 @@
  * @param Obj {function} the constructor for the object to be mocked
  * @return {object} a mock object
  */
-JsMockito.mock = function(Obj) {
+JsMockito.mock = function(Obj, spy) {
   var delegate = {};
   if (typeof Obj != "function") {
     delegate = Obj;
@@ -53,7 +53,7 @@ JsMockito.mock = function(Obj) {
     if (delegate[name] != undefined) {
       delegateMethod = function() {
         var context = (this == mockObject)? delegate : this;
-        return delegate[name].apply(context, arguments);
+        if(spy) return delegate[name].apply(context, arguments);
       };
     }
     var mockFunc = JsMockito.mockFunction('obj.' + name, delegateMethod);

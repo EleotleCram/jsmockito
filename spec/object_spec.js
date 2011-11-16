@@ -5,7 +5,7 @@ Screw.Unit(function() {
     describe("when mock object created", function() {
       var mockObj;
       before(function() {
-        mockObj = mock(MyObject);
+		mockObj = mock(MyObject);
       });
 
       it("should be an instance of the same class", function() {
@@ -29,32 +29,38 @@ Screw.Unit(function() {
 
     describe("when mock method invoked once with no arguments", function() { 
       var mockObj;
+      var proxyMock;
       var result;
       before(function() {
-        mockObj = mock(MyObject);
-        result = mockObj.greeting();
+		mockObj = mock(MyObject);
+        proxyMock = mock(mockObj);
+        result = proxyMock.greeting();
       });
 
       it("should return undefined", function() {
         assertThat(result, sameAs(undefined));
       });
 
+      it("should not invoke method on proxied object", function() {
+		verify(mockObj, never()).greeting();
+      });
+
       it("should verify method was invoked", function() {
-        verify(mockObj).greeting();
+        verify(proxyMock).greeting();
       });
 
       it("should verify method was invoked with context", function() {
-        verify(mockObj).greeting.call(mockObj);
+        verify(proxyMock).greeting.call(proxyMock);
       });
 
       it("should verify method was invocked using context matcher", function() {
-        verify(mockObj).greeting.apply(anything(), []);
+        verify(proxyMock).greeting.apply(anything(), []);
       });
 
       it("should not verify method was invoked with different context", function() {
         var testContext = {};
         assertThat(function() {
-          verify(mockObj).greeting.call(testContext);
+          verify(proxyMock).greeting.call(testContext);
         }, throwsMessage(
           "Wanted but not invoked: obj.greeting(), 'this' being equal to " + testContext)
         );
@@ -62,59 +68,65 @@ Screw.Unit(function() {
 
       it("should verify that method was not invoked twice", function() {
         assertThat(function() {
-          verify(mockObj, times(2)).greeting();
+          verify(proxyMock, times(2)).greeting();
         }, throwsMessage("Wanted 2 invocations but got 1: obj.greeting()"));
       });
 
       it("should not verify that the mock object had zero interactions", function() {
         assertThat(function() {
-          verifyZeroInteractions(mockObj);
+          verifyZeroInteractions(proxyMock);
         }, throwsMessage("Never wanted but invoked: obj.greeting()"));
       });
 
       it("should not verify that the mock object had no more interactions", function() {
         assertThat(function() {
-          verifyNoMoreInteractions(mockObj);
+          verifyNoMoreInteractions(proxyMock);
         }, throwsMessage("No interactions wanted, but 1 remains: obj.greeting()"));
       });
 
       describe("when verified", function() {
         before(function() {
-          verify(mockObj).greeting();
+          verify(proxyMock).greeting();
         });
 
         it("should verify that mock object had no more interactions", function() {
-          verifyNoMoreInteractions(mockObj);
+          verifyNoMoreInteractions(proxyMock);
         });
       });
     });
 
     describe("when mock method invocked with multiple arguments", function() {
       var mockObj;
+      var proxyMock;
       before(function() {
-        mockObj = mock(MyObject);
-        mockObj.farewell('hunter', 'thompson', 67);
+		mockObj = mock(MyObject);
+        proxyMock = mock(mockObj);
+        proxyMock.farewell('hunter', 'thompson', 67);
+      });
+
+      it("should not invoke method on proxied object", function() {
+		verify(mockObj, never()).farewell();
       });
 
       it("should verify the method was invoked", function() {
-        verify(mockObj).farewell();
+        verify(proxyMock).farewell();
       });
 
       it("should verify the method was invoked with some arguments", function() {
-        verify(mockObj).farewell('hunter', 'thompson');
+        verify(proxyMock).farewell('hunter', 'thompson');
       });
 
       it("should verify the method was invoked with all arguments", function() {
-        verify(mockObj).farewell('hunter', 'thompson', 67);
+        verify(proxyMock).farewell('hunter', 'thompson', 67);
       });
 
       it("should verify the method was invoked using matchers", function() {
-        verify(mockObj).farewell('hunter', 'thompson', lessThan(100));
+        verify(proxyMock).farewell('hunter', 'thompson', lessThan(100));
       });
 
       it("should not verify the method was invoked if looking for additional arguments", function() {
         assertThat(function() {
-          verify(mockObj).farewell('hunter', 'thompson', 67, 'batcountry');
+          verify(proxyMock).farewell('hunter', 'thompson', 67, 'batcountry');
         }, throwsMessage(
           "Wanted but not invoked: obj.farewell(<equal to \"hunter\">, <equal to \"thompson\">, <equal to 67>, <equal to \"batcountry\">)")
         );
@@ -122,7 +134,7 @@ Screw.Unit(function() {
 
       it("should not verify the method was invoked if different arguments", function() {
         assertThat(function() {
-          verify(mockObj).farewell('hunter', 'thompson', 68);
+          verify(proxyMock).farewell('hunter', 'thompson', 68);
         }, throwsMessage(
           "Wanted but not invoked: obj.farewell(<equal to \"hunter\">, <equal to \"thompson\">, <equal to 68>)")
         );
@@ -131,27 +143,35 @@ Screw.Unit(function() {
 
     describe("when mock method invocked with different context", function() {
       var mockObj;
+      var proxyMock;
       var testContext = {};
       before(function() {
-        mockObj = mock(MyObject);
-        mockObj.greeting.call(testContext);
+		mockObj = mock(MyObject);
+        proxyMock = mock(mockObj);
+        proxyMock.greeting.call(testContext);
+      });
+
+      it("should not invoke method on proxied object", function() {
+		verify(mockObj, never()).greeting.apply(testContext, []);
       });
 
       it("should not verify that the method was invoked without explicit context", function() {
         assertThat(function() {
-          verify(mockObj).greeting();
+          verify(proxyMock).greeting();
         }, throwsMessage("Wanted but not invoked: obj.greeting()"));
       });
 
       it("should verify method was invoked with explicit context", function() {
-        verify(mockObj).greeting.apply(testContext, []);
+        verify(proxyMock).greeting.apply(testContext, []);
       });
     });
 
     describe("when stubbing methods", function() {
       var mockObj;
+      var proxyMock;
       before(function() {
-        mockObj = mock(MyObject);
+		mockObj = mock(MyObject);
+        proxyMock = mock(mockObj);
       });
 
       var stubContext;
@@ -170,51 +190,59 @@ Screw.Unit(function() {
       describe("when method is stubbed with no arguments", function() {
         describe("when no clause applied", function() {
           before(function() {
-            when(mockObj).greeting();
+            when(proxyMock).greeting();
           });
 
+		  it("should not invoke method on proxied object", function() {
+			verify(mockObj, never()).greeting();
+		  });
+
           it("should return undefined", function() {
-            assertThat(mockObj.greeting(), sameAs(undefined));
+            assertThat(proxyMock.greeting(), sameAs(undefined));
           });
         });
 
         describe("when using 'then' and a function stub", function() {
           before(function() {
-            when(mockObj).greeting().then(stubFunction);
+            when(proxyMock).greeting().then(stubFunction);
           });
 
+		  it("should not invoke method on proxied object", function() {
+			verify(mockObj, never()).greeting();
+		  });
+
           it("should return result of stub function", function() {
-            assertThat(mockObj.greeting(), equalTo('stub result'));
+            assertThat(proxyMock.greeting(), equalTo('stub result'));
           });
 
           it("should invoke stub function when called", function() {
-            mockObj.greeting();
+            proxyMock.greeting();
             assertThat(stubArguments, not(nil()));
           });
 
           it("should invoke stub function with the mock as context by default", function() {
-            mockObj.greeting();
-            assertThat(stubContext, sameAs(mockObj), "Context was not the same");
+            proxyMock.greeting();
+            assertThat(stubContext, sameAs(proxyMock), "Context was not the same");
           });
 
           it("should invoke stub function with the same arguments", function() {
-            mockObj.greeting('hello', undefined, 5);
+            proxyMock.greeting('hello', undefined, 5);
             assertThat(stubArguments, equalTo(['hello', undefined, 5]));
           });
 
           it("should invoke stub function when invoked via call with object as context", function() {
-            mockObj.greeting.call(mockObj);
-            assertThat(stubContext, sameAs(mockObj), "Context was not the same");
+            proxyMock.greeting.call(proxyMock);
+            assertThat(stubContext, sameAs(proxyMock), "Context was not the same");
           });
 
           it("should invoke stub function when invoked via apply with object as context", function() {
-            mockObj.greeting.apply(mockObj, ['hello', 6]);
-            assertThat(stubContext, sameAs(mockObj), "Context was not the same");
+            proxyMock.greeting.apply(proxyMock, ['hello', 6]);
+            assertThat(stubContext, sameAs(proxyMock), "Context was not the same");
             assertThat(stubArguments, equalTo(['hello', 6]));
           });
 
           it("should not invoke stub function when invoked via call with different context", function() {
-            assertThat(mockObj.greeting.call({}), sameAs(undefined));
+            assertThat(proxyMock.greeting.call({}), sameAs(undefined));
             assertThat(stubContext, sameAs(undefined));
           });
         });
@@ -222,34 +250,42 @@ Screw.Unit(function() {
 
       describe("when method is stubbed with multiple arguments", function() {
         before(function() {
-          when(mockObj).farewell('foo', lessThan(10), anything()).then(stubFunction);
+          when(proxyMock).farewell('foo', lessThan(10), anything()).then(stubFunction);
+        });
+
+        it("should not invoke method on proxied object", function() {
+		  verify(mockObj, never()).farewell();
         });
 
         it("should return result of stub function", function() {
-          assertThat(mockObj.farewell('foo', 9, {}), equalTo('stub result'));
+          assertThat(proxyMock.farewell('foo', 9, {}), equalTo('stub result'));
         });
 
         it("should invoke stub even if additional arguments are present", function() {
-          assertThat(mockObj.farewell.apply(mockObj, ['foo', 9, {}, 'something else']), equalTo('stub result'));
+          assertThat(proxyMock.farewell.apply(proxyMock, ['foo', 9, {}, 'something else']), equalTo('stub result'));
         });
 
         it("should return undefined if insufficent arguments compared to stub", function() {
-          assertThat(mockObj.farewell('foo', 9), sameAs(undefined));
+          assertThat(proxyMock.farewell('foo', 9), sameAs(undefined));
         });
 
         it("should return undefined if arguments do not match", function() {
-          assertThat(mockObj.farewell('foo', 11, 'bar'), sameAs(undefined));
+          assertThat(proxyMock.farewell('foo', 11, 'bar'), sameAs(undefined));
         });
       });
     
       describe("when stubbing a method with explit context matcher and 'then' clause", function() {
         before(function() {
-          when(mockObj).greeting.call(anything()).then(stubFunction);
+          when(proxyMock).greeting.call(anything()).then(stubFunction);
+        });
+
+        it("should not invoke method on proxied object", function() {
+		  verify(mockObj, never()).greeting.call();
         });
 
         it("should invoke stub function with the same explicit context", function() {
           var context = {};
-          mockObj.greeting.call(context, 1, 'foo');
+          proxyMock.greeting.call(context, 1, 'foo');
           assertThat(stubContext, sameAs(context), "Context was not the same");
         });
       });
